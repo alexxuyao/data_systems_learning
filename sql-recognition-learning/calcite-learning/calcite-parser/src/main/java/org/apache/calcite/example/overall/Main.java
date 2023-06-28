@@ -27,8 +27,8 @@ import java.util.Map;
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        String userPath = args[0];
-        String orderPath = args[1];
+        String userPath = "D:/workspace-alex/data_systems_learning_alex/sql-recognition-learning/calcite-learning/calcite-parser/src/main/resources/user.csv";
+        String orderPath = "D:/workspace-alex/data_systems_learning_alex/sql-recognition-learning/calcite-learning/calcite-parser/src/main/resources/order.csv";
         SimpleTable userTable = SimpleTable.newBuilder("users")
                 .addField("id", SqlTypeName.VARCHAR)
                 .addField("name", SqlTypeName.VARCHAR)
@@ -53,7 +53,7 @@ public class Main {
 
         String sql = "SELECT u.id, name, age, sum(price) " +
                 "FROM users AS u join orders AS o ON u.id = o.user_id " +
-                "WHERE age >= 20 AND age <= 30 " +
+                "WHERE age >= ? AND age <= 30 " +
                 "GROUP BY u.id, name, age " +
                 "ORDER BY u.id";
         String sql1 = "SELECT id, name, age + 1 FROM users";
@@ -64,7 +64,7 @@ public class Main {
 
         Optimizer optimizer = Optimizer.create(schema);
         // 1. SQL parse: SQL string --> SqlNode
-        SqlNode sqlNode = optimizer.parse(sql1);
+        SqlNode sqlNode = optimizer.parse(sql);
         CalciteUtil.print("Parse result:", sqlNode.toString());
         // 2. SQL validate: SqlNode --> SqlNode
         SqlNode validateSqlNode = optimizer.validate(sqlNode);
@@ -93,7 +93,10 @@ public class Main {
         CalciteUtil.print("Optimize result:", optimizerRelTree.explain());
         // 5. SQL execute: RelNode --> execute code
         EnumerableRel enumerable = (EnumerableRel) optimizerRelTree;
+
+
         Map<String, Object> internalParameters = new LinkedHashMap<>();
+
         EnumerableRel.Prefer prefer = EnumerableRel.Prefer.ARRAY;
         Bindable bindable = EnumerableInterpretable.toBindable(internalParameters,
                 null, enumerable, prefer);

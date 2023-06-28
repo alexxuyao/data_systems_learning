@@ -23,8 +23,8 @@ import org.apache.calcite.tools.RuleSets;
 public class BindableMain {
 
     public static void main(String[] args) throws Exception {
-        String userPath = args[0];
-        String orderPath = args[1];
+        String userPath = "D:/workspace-alex/data_systems_learning_alex/sql-recognition-learning/calcite-learning/calcite-parser/src/main/resources/user.csv";
+        String orderPath = "D:/workspace-alex/data_systems_learning_alex/sql-recognition-learning/calcite-learning/calcite-parser/src/main/resources/order.csv";
         SimpleTable userTable = SimpleTable.newBuilder("users")
                 .addField("id", SqlTypeName.VARCHAR)
                 .addField("name", SqlTypeName.VARCHAR)
@@ -58,7 +58,7 @@ public class BindableMain {
 
         Optimizer optimizer = Optimizer.create(schema);
         // 1. SQL parse: SQL string --> SqlNode
-        SqlNode sqlNode = optimizer.parse(sql1);
+        SqlNode sqlNode = optimizer.parse(sql);
         CalciteUtil.print("Parse result:", sqlNode.toString());
         // 2. SQL validate: SqlNode --> SqlNode
         SqlNode validateSqlNode = optimizer.validate(sqlNode);
