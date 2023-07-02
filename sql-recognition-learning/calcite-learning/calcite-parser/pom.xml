@@ -28,6 +28,14 @@
             <version>2.4.1</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+            <version>3.1.6</version>
+            <scope>compile</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

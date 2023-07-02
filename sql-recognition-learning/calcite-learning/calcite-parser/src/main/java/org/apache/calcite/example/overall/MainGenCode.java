@@ -24,7 +24,7 @@ import java.util.Map;
  * args[0]: csv file path for user.csv <br>
  * args[1]: csv file path for order.csv <br>
  */
-public class Main {
+public class MainGenCode {
 
     public static void main(String[] args) throws Exception {
         String userPath = "D:/workspace-alex/data_systems_learning_alex/sql-recognition-learning/calcite-learning/calcite-parser/src/main/resources/user.csv";
@@ -98,8 +98,13 @@ public class Main {
         Map<String, Object> internalParameters = new LinkedHashMap<>();
 
         EnumerableRel.Prefer prefer = EnumerableRel.Prefer.ARRAY;
-        Bindable bindable = EnumerableInterpretable.toBindable(internalParameters,
-                null, enumerable, prefer);
+
+        BindableCodeGen.BindableCodeResult result = BindableCodeGen.toBindableCode(internalParameters, enumerable, prefer);
+
+        System.out.println(result);
+
+        Bindable bindable = BindableCodeGen.getBindable2(result);
+
         Map<String, Object> dynamicParameters = new LinkedHashMap<>();
         dynamicParameters.put("?0", 24);
         Enumerable bind = bindable.bind(new SimpleDataContext(rootSchema.plus(), dynamicParameters));
@@ -114,5 +119,6 @@ public class Main {
             sb.setLength(sb.length() - 1);
             System.out.println(sb);
         }
+
     }
 }
