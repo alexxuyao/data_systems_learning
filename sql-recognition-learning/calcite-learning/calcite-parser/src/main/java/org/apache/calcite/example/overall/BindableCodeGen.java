@@ -52,7 +52,7 @@ public class BindableCodeGen {
         return (Bindable) cbe.createInstance(new StringReader(codeResult.getBodyCode()));
     }
 
-    public static Bindable getBindable2(BindableCodeResult codeResult) throws CompileException, IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public static Map<String, byte[]> compileBindable(BindableCodeResult codeResult) throws CompileException, IOException {
         ICompilerFactory compilerFactory;
         try {
             compilerFactory = CompilerFactoryFactory.getDefaultCompilerFactory();
@@ -75,6 +75,11 @@ public class BindableCodeGen {
                         BindableCodeResult.toClassCode(codeResult)
                 )
         });
+
+        return classes;
+    }
+
+    public static Bindable getBindable2(BindableCodeResult codeResult, Map<String, byte[]> classes) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
 
         // Set up a class loader that uses the generated classes.
         ClassLoader cl = new ResourceFinderClassLoader(

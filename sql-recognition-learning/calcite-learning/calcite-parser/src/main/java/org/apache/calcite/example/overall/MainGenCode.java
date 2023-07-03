@@ -11,6 +11,7 @@ import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.runtime.Bindable;
+import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RuleSet;
@@ -103,7 +104,8 @@ public class MainGenCode {
 
         System.out.println(result);
 
-        Bindable bindable = BindableCodeGen.getBindable2(result);
+        Map<String, byte[]> classes = BindableCodeGen.compileBindable(result);
+        Bindable bindable = BindableCodeGen.getBindable2(result, classes);
 
         Map<String, Object> dynamicParameters = new LinkedHashMap<>();
         dynamicParameters.put("?0", 24);
@@ -119,6 +121,10 @@ public class MainGenCode {
             sb.setLength(sb.length() - 1);
             System.out.println(sb);
         }
+
+        // 下一步：理解 table 的定制, SimpleTableStatistic 。主要理解 getRowType , scan
+        // 理解代码的生成逻辑
+        // 理解 Enumerator.current() 的返回值
 
     }
 }
