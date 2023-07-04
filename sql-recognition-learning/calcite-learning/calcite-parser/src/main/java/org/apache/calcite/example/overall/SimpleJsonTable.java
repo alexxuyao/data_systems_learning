@@ -1,5 +1,6 @@
 package org.apache.calcite.example.overall;
 
+import com.alibaba.fastjson.JSONObject;
 import org.apache.calcite.DataContext;
 import org.apache.calcite.linq4j.AbstractEnumerable;
 import org.apache.calcite.linq4j.Enumerable;
@@ -11,26 +12,35 @@ import org.apache.calcite.sql.type.SqlTypeName;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SimpleJsonTable extends AbstractTable implements ScannableTable {
 
     private final String tableName;
     private final List<String> fieldNames;
     private final List<SqlTypeName> fieldTypes;
+    private final List<JSONObject> data;
 
     private RelDataType rowType;
 
-    public SimpleJsonTable(String tableName, List<String> fieldNames, List<SqlTypeName> fieldTypes) {
+    public SimpleJsonTable(String tableName,
+                           List<String> fieldNames,
+                           List<SqlTypeName> fieldTypes,
+                           List<JSONObject> data) {
         this.tableName = tableName;
         this.fieldNames = fieldNames;
         this.fieldTypes = fieldTypes;
+        this.data = data;
     }
 
     @Override
     public Enumerable<Object[]> scan(DataContext root) {
+
+        AtomicBoolean cancelFlag = DataContext.Variable.CANCEL_FLAG.get(root);
+
         return new AbstractEnumerable<Object[]>() {
             public Enumerator<Object[]> enumerator() {
-                return new SimpleJsonEnumerator<>(data, cancelFlag);
+                return new SimpleJsonEnumerator<>(fieldNames, fieldTypes, data, cancelFlag);
             }
         };
     }
@@ -50,5 +60,9 @@ public class SimpleJsonTable extends AbstractTable implements ScannableTable {
         }
 
         return rowType;
+    }
+
+    public String getTableName() {
+        return tableName;
     }
 }

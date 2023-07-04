@@ -14,6 +14,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.schema.impl.AbstractSchema;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -47,7 +48,7 @@ public class Optimizer {
     this.planner = planner;
   }
 
-  public static Optimizer create(SimpleSchema schema) {
+  public static Optimizer create(AbstractSchema schema, String schemaName) {
     Properties configProperties = new Properties();
     configProperties.put(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), Boolean.TRUE.toString());
     configProperties.put(CalciteConnectionProperty.UNQUOTED_CASING.camelName(), Casing.UNCHANGED.toString());
@@ -56,14 +57,14 @@ public class Optimizer {
 
     // create root schema
     CalciteSchema rootSchema = CalciteSchema.createRootSchema(false, false);
-    rootSchema.add(schema.getSchemaName(), schema);
+    rootSchema.add(schemaName, schema);
 
     RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
 
     // create catalog reader, needed by SqlValidator
     Prepare.CatalogReader catalogReader = new CalciteCatalogReader(
             rootSchema,
-            Collections.singletonList(schema.getSchemaName()),
+            Collections.singletonList(schemaName),
             typeFactory,
             config);
 

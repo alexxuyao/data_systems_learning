@@ -1,7 +1,7 @@
 package org.apache.calcite.example.overall;
 
+import com.alibaba.fastjson.JSONObject;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
-import org.apache.calcite.adapter.enumerable.EnumerableInterpretable;
 import org.apache.calcite.adapter.enumerable.EnumerableRel;
 import org.apache.calcite.adapter.enumerable.EnumerableRules;
 import org.apache.calcite.example.CalciteUtil;
@@ -16,35 +16,77 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
-/**
- * Arguments: <br>
- * args[0]: csv file path for user.csv <br>
- * args[1]: csv file path for order.csv <br>
- */
-public class Main {
+public class JsonSchemaMain {
 
     public static void main(String[] args) throws Exception {
-        String userPath = "D:/workspace-alex/data_systems_learning_alex/sql-recognition-learning/calcite-learning/calcite-parser/src/main/resources/user.csv";
-        String orderPath = "D:/workspace-alex/data_systems_learning_alex/sql-recognition-learning/calcite-learning/calcite-parser/src/main/resources/order.csv";
-        SimpleTable userTable = SimpleTable.newBuilder("users")
-                .addField("id", SqlTypeName.VARCHAR)
-                .addField("name", SqlTypeName.VARCHAR)
-                .addField("age", SqlTypeName.INTEGER)
-                .withFilePath(userPath)
-                .withRowCount(10)
-                .build();
-        SimpleTable orderTable = SimpleTable.newBuilder("orders")
-                .addField("id", SqlTypeName.VARCHAR)
-                .addField("user_id", SqlTypeName.VARCHAR)
-                .addField("goods", SqlTypeName.VARCHAR)
-                .addField("price", SqlTypeName.DECIMAL)
-                .withFilePath(orderPath)
-                .withRowCount(10)
-                .build();
-        SimpleSchema schema = SimpleSchema.newBuilder("s")
+
+        List<JSONObject> users = new ArrayList<>(Arrays.asList(
+                new JSONObject() {{
+                    put("id", "1");
+                    put("name", "alex");
+                    put("age", 20);
+                }},
+                new JSONObject() {{
+                    put("id", "2");
+                    put("name", "bob");
+                    put("age", 30);
+                }},
+                new JSONObject() {{
+                    put("id", "3");
+                    put("name", "cindy");
+                    put("age", 40);
+                }}
+        ));
+        List<JSONObject> orders = new ArrayList<>(Arrays.asList(
+                new JSONObject(){{
+                    put("id", "1");
+                    put("user_id", "1");
+                    put("goods", "商品1");
+                    put("price", 1.1);
+                }},
+                new JSONObject(){{
+                    put("id", "2");
+                    put("user_id", "1");
+                    put("goods", "商品2");
+                    put("price", 2.2);
+                }},
+                new JSONObject(){{
+                    put("id", "3");
+                    put("user_id", "2");
+                    put("goods", "商品3");
+                    put("price", 3.3);
+                }},
+                new JSONObject(){{
+                    put("id", "4");
+                    put("user_id", "2");
+                    put("goods", "商品4");
+                    put("price", 4.4);
+                }},
+                new JSONObject(){{
+                    put("id", "5");
+                    put("user_id", "3");
+                    put("goods", "商品5");
+                    put("price", 5.5);
+                }},
+                new JSONObject(){{
+                    put("id", "6");
+                    put("user_id", "3");
+                    put("goods", "商品6");
+                    put("price", 6.6);
+                }}
+        ));
+
+        SimpleJsonTable userTable = new SimpleJsonTable("users",
+                Arrays.asList("id", "name", "age"),
+                Arrays.asList(SqlTypeName.VARCHAR, SqlTypeName.VARCHAR, SqlTypeName.INTEGER), users);
+
+        SimpleJsonTable orderTable = new SimpleJsonTable("orders",
+                Arrays.asList("id", "user_id", "goods", "price"),
+                Arrays.asList(SqlTypeName.VARCHAR, SqlTypeName.VARCHAR, SqlTypeName.VARCHAR, SqlTypeName.DECIMAL), orders);
+
+        SimpleJsonSchema schema = SimpleJsonSchema.newBuilder("s")
                 .addTable(userTable)
                 .addTable(orderTable)
                 .build();
@@ -98,10 +140,16 @@ public class Main {
         Map<String, Object> internalParameters = new LinkedHashMap<>();
 
         EnumerableRel.Prefer prefer = EnumerableRel.Prefer.ARRAY;
-        Bindable bindable = EnumerableInterpretable.toBindable(internalParameters,
-                null, enumerable, prefer);
+
+        BindableCodeGen.BindableCodeResult result = BindableCodeGen.toBindableCode(internalParameters, enumerable, prefer);
+
+        System.out.println(result);
+
+        Map<String, byte[]> classes = BindableCodeGen.compileBindable(result);
+        Bindable bindable = BindableCodeGen.getBindable2(result, classes);
+
         Map<String, Object> dynamicParameters = new LinkedHashMap<>();
-        dynamicParameters.put("?0", 24);
+        dynamicParameters.put("?0", 19);
         Enumerable bind = bindable.bind(new SimpleDataContext(rootSchema.plus(), dynamicParameters));
         Enumerator enumerator = bind.enumerator();
         while (enumerator.moveNext()) {

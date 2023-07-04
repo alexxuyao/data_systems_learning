@@ -63,7 +63,7 @@ public class MainGenCode {
         String sql4 = "SELECT u.name, o.price FROM users AS u join orders AS o " +
                 "on u.id = o.user_id WHERE o.price > 90";
 
-        Optimizer optimizer = Optimizer.create(schema);
+        Optimizer optimizer = Optimizer.create(schema, schema.getSchemaName());
         // 1. SQL parse: SQL string --> SqlNode
         SqlNode sqlNode = optimizer.parse(sql);
         CalciteUtil.print("Parse result:", sqlNode.toString());
