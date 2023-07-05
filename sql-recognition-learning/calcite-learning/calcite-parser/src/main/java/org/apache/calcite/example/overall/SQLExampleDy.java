@@ -205,21 +205,23 @@ public class SQLExampleDy {
                                              (Object[]) a0);
                                  }
                              }
-                , lambdaFactory.accumulatorInitializer(), lambdaFactory.accumulatorAdder(), lambdaFactory.resultSelector(new Function2() {
-                                                                                                                             public Object[] apply(FlatLists.ComparableList key, Record1_0 acc) {
-                                                                                                                                 return new Object[]{
-                                                                                                                                         key.get(0) == null ? (String) null : key.get(0).toString(),
-                                                                                                                                         key.get(1) == null ? (String) null : key.get(1).toString(),
-                                                                                                                                         SqlFunctions.toInt(key.get(2)),
-                                                                                                                                         acc.f0};
-                                                                                                                             }
+                , lambdaFactory.accumulatorInitializer()
+                , lambdaFactory.accumulatorAdder()
+                , lambdaFactory.resultSelector(new Function2() {
+                                                   public Object[] apply(FlatLists.ComparableList key, Record1_0 acc) {
+                                                       return new Object[]{
+                                                               key.get(0) == null ? (String) null : key.get(0).toString(),
+                                                               key.get(1) == null ? (String) null : key.get(1).toString(),
+                                                               SqlFunctions.toInt(key.get(2)),
+                                                               acc.f0};
+                                                   }
 
-                                                                                                                             public Object[] apply(Object key, Object acc) {
-                                                                                                                                 return apply(
-                                                                                                                                         (FlatLists.ComparableList) key,
-                                                                                                                                         (Record1_0) acc);
-                                                                                                                             }
-                                                                                                                         }
+                                                   public Object[] apply(Object key, Object acc) {
+                                                       return apply(
+                                                               (FlatLists.ComparableList) key,
+                                                               (Record1_0) acc);
+                                                   }
+                                               }
                 )).orderBy(new Function1() {
                                public String apply(Object[] v) {
                                    return v[0] == null ? (String) null : v[0].toString();

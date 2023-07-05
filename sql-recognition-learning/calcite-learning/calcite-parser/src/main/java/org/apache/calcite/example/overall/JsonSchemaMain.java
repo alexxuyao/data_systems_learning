@@ -44,37 +44,37 @@ public class JsonSchemaMain {
                     put("id", "1");
                     put("user_id", "1");
                     put("goods", "商品1");
-                    put("price", 1.1);
+                    put("price", "1.1");
                 }},
                 new JSONObject(){{
                     put("id", "2");
                     put("user_id", "1");
                     put("goods", "商品2");
-                    put("price", 2.2);
+                    put("price", "2.2");
                 }},
                 new JSONObject(){{
                     put("id", "3");
                     put("user_id", "2");
                     put("goods", "商品3");
-                    put("price", 3.3);
+                    put("price", "3.3");
                 }},
                 new JSONObject(){{
                     put("id", "4");
                     put("user_id", "2");
                     put("goods", "商品4");
-                    put("price", 4.4);
+                    put("price", "4.4");
                 }},
                 new JSONObject(){{
                     put("id", "5");
                     put("user_id", "3");
                     put("goods", "商品5");
-                    put("price", 5.5);
+                    put("price", "5.5");
                 }},
                 new JSONObject(){{
                     put("id", "6");
                     put("user_id", "3");
                     put("goods", "商品6");
-                    put("price", 6.6);
+                    put("price", "6.6");
                 }}
         ));
 
@@ -84,7 +84,7 @@ public class JsonSchemaMain {
 
         SimpleJsonTable orderTable = new SimpleJsonTable("orders",
                 Arrays.asList("id", "user_id", "goods", "price"),
-                Arrays.asList(SqlTypeName.VARCHAR, SqlTypeName.VARCHAR, SqlTypeName.VARCHAR, SqlTypeName.DECIMAL), orders);
+                Arrays.asList(SqlTypeName.VARCHAR, SqlTypeName.VARCHAR, SqlTypeName.VARCHAR, SqlTypeName.BIGINT), orders);
 
         SimpleJsonSchema schema = SimpleJsonSchema.newBuilder("s")
                 .addTable(userTable)
