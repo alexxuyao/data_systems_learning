@@ -56,7 +56,7 @@ public class BindableMain {
         String sql2 = "INSERT INTO users VALUES (1, 'Jark', 21)";
         String sql3 = "DELETE FROM users WHERE id > 1";
 
-        Optimizer optimizer = Optimizer.create(schema, schema.getSchemaName());
+        Optimizer optimizer = Optimizer.create(rootSchema, schema.getSchemaName());
         // 1. SQL parse: SQL string --> SqlNode
         SqlNode sqlNode = optimizer.parse(sql);
         CalciteUtil.print("Parse result:", sqlNode.toString());

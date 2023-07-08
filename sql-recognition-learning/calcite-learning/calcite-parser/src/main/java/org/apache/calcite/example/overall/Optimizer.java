@@ -14,10 +14,11 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
-import org.apache.calcite.schema.impl.AbstractSchema;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
+import org.apache.calcite.sql.util.ListSqlOperatorTable;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.sql2rel.SqlToRelConverter;
@@ -27,7 +28,9 @@ import org.apache.calcite.tools.Programs;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 public class Optimizer {
@@ -48,17 +51,15 @@ public class Optimizer {
     this.planner = planner;
   }
 
-  public static Optimizer create(AbstractSchema schema, String schemaName) {
+  public static Optimizer create(CalciteSchema rootSchema, String schemaName) {
     Properties configProperties = new Properties();
     configProperties.put(CalciteConnectionProperty.CASE_SENSITIVE.camelName(), Boolean.TRUE.toString());
     configProperties.put(CalciteConnectionProperty.UNQUOTED_CASING.camelName(), Casing.UNCHANGED.toString());
     configProperties.put(CalciteConnectionProperty.QUOTED_CASING.camelName(), Casing.UNCHANGED.toString());
+    // configProperties.put(CalciteConnectionProperty.FUN.camelName(), SqlLibrary.MYSQL.fun); 加了也没用？
     CalciteConnectionConfig config = new CalciteConnectionConfigImpl(configProperties);
 
-    // create root schema
-    CalciteSchema rootSchema = CalciteSchema.createRootSchema(false, false);
-    rootSchema.add(schemaName, schema);
-
+    // create type factory, needed by SqlValidator
     RelDataTypeFactory typeFactory = new JavaTypeFactoryImpl();
 
     // create catalog reader, needed by SqlValidator
@@ -74,8 +75,15 @@ public class Optimizer {
             .withSqlConformance(config.conformance())
             .withDefaultNullCollation(config.defaultNullCollation())
             .withIdentifierExpansion(true);
+
+    // 组合自定义的operator和标准的operator
+    List<SqlOperator> operatorList = new ArrayList<>(catalogReader.getOperatorList());
+    operatorList.addAll(SqlStdOperatorTable.instance().getOperatorList());
+    ListSqlOperatorTable operatorTable = new ListSqlOperatorTable(operatorList);
+
+    // create SqlValidator
     SqlValidator validator = SqlValidatorUtil.newValidator(
-            SqlStdOperatorTable.instance(), catalogReader, typeFactory, validatorConfig);
+            operatorTable, catalogReader, typeFactory, validatorConfig);
 
     // create VolcanoPlanner, needed by SqlToRelConverter and optimizer
     VolcanoPlanner planner = new VolcanoPlanner(RelOptCostImpl.FACTORY, Contexts.of(config));
@@ -113,12 +121,26 @@ public class Optimizer {
     return validator.validate(node);
   }
 
+  /**
+   * 将 语法树 转为 关系代数 树
+   * @param node 语法树
+   * @return 关系代数树
+   */
   public RelNode convert(SqlNode node) {
     RelRoot root = converter.convertQuery(node, false, true);
 
     return root.rel;
   }
 
+  /**
+   * 优化关系代数树
+   * 是 逻辑计划优化 还是 物理计划优化 ？
+   *
+   * @param node 关系代数树
+   * @param requiredTraitSet
+   * @param rules 优化规则
+   * @return 优化后的关系代数树
+   */
   public RelNode optimize(RelNode node, RelTraitSet requiredTraitSet, RuleSet rules) {
     Program program = Programs.of(RuleSets.ofList(rules));
 

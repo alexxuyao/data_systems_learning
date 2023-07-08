@@ -11,6 +11,7 @@ import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.runtime.Bindable;
+import org.apache.calcite.schema.impl.ScalarFunctionImpl;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RuleSet;
@@ -50,6 +51,7 @@ public class Main {
                 .build();
         CalciteSchema rootSchema = CalciteSchema.createRootSchema(false, false);
         rootSchema.add(schema.getSchemaName(), schema);
+        rootSchema.plus().add("NOW", ScalarFunctionImpl.create(UDFNow.class, "now"));
 
         String sql = "SELECT u.id, name, age, sum(price) " +
                 "FROM users AS u join orders AS o ON u.id = o.user_id " +
@@ -61,10 +63,15 @@ public class Main {
         String sql3 = "DELETE FROM users WHERE id > 1";
         String sql4 = "SELECT u.name, o.price FROM users AS u join orders AS o " +
                 "on u.id = o.user_id WHERE o.price > 90";
+        String sql5 = "select 1,2,5"; // 无法优化
+        String sql6 = "select NOW() as a, 1 from users"; // 找不到函数
+        String sql7 = "select ABS(1)"; // 无法优化
+        String sql8 = "select ABS(age) from users"; // 这样返回的不是一个数组，而是一个值
+        String sql9 = "select ABS(age),12 from users"; //
 
-        Optimizer optimizer = Optimizer.create(schema, schema.getSchemaName());
+        Optimizer optimizer = Optimizer.create(rootSchema, schema.getSchemaName());
         // 1. SQL parse: SQL string --> SqlNode
-        SqlNode sqlNode = optimizer.parse(sql);
+        SqlNode sqlNode = optimizer.parse(sql6);
         CalciteUtil.print("Parse result:", sqlNode.toString());
         // 2. SQL validate: SqlNode --> SqlNode
         SqlNode validateSqlNode = optimizer.validate(sqlNode);
