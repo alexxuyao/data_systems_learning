@@ -8,6 +8,7 @@ import org.apache.calcite.example.CalciteUtil;
 import org.apache.calcite.jdbc.CalciteSchema;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.Enumerator;
+import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rules.CoreRules;
 import org.apache.calcite.runtime.Bindable;
@@ -17,8 +18,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.tools.RuleSet;
 import org.apache.calcite.tools.RuleSets;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Arguments: <br>
@@ -63,15 +63,16 @@ public class Main {
         String sql3 = "DELETE FROM users WHERE id > 1";
         String sql4 = "SELECT u.name, o.price FROM users AS u join orders AS o " +
                 "on u.id = o.user_id WHERE o.price > 90";
-        String sql5 = "select 1,2,5"; // 无法优化
-        String sql6 = "select NOW() as a, 1 from users"; // 找不到函数
-        String sql7 = "select ABS(1)"; // 无法优化
+        String sql5 = "select 1,2,5"; // 加入 ENUMERABLE_VALUES_RULE 规则后可以了
+        String sql6 = "select NOW() as a, 1 from users"; //
+        String sql7 = "select ABS(1)"; // 这样返回的不是一个数组，而是一个值
         String sql8 = "select ABS(age) from users"; // 这样返回的不是一个数组，而是一个值
         String sql9 = "select ABS(age),12 from users"; //
+        String sql10 = "select NOW()"; // 无法优化
 
         Optimizer optimizer = Optimizer.create(rootSchema, schema.getSchemaName());
         // 1. SQL parse: SQL string --> SqlNode
-        SqlNode sqlNode = optimizer.parse(sql6);
+        SqlNode sqlNode = optimizer.parse(sql5);
         CalciteUtil.print("Parse result:", sqlNode.toString());
         // 2. SQL validate: SqlNode --> SqlNode
         SqlNode validateSqlNode = optimizer.validate(sqlNode);
@@ -79,13 +80,28 @@ public class Main {
         // 3. SQL convert: SqlNode --> RelNode
         RelNode relNode = optimizer.convert(validateSqlNode);
         CalciteUtil.print("Convert result:", relNode.explain());
+
+
         // 4. SQL Optimize: RelNode --> RelNode
+        List<RelOptRule> relOptRules = new ArrayList<>(EnumerableRules.ENUMERABLE_RULES);
+        relOptRules.addAll(Arrays.asList(
+                EnumerableRules.ENUMERABLE_PROJECT_TO_CALC_RULE,
+                EnumerableRules.ENUMERABLE_FILTER_TO_CALC_RULE,
+                CoreRules.FILTER_TO_CALC,
+                CoreRules.PROJECT_TO_CALC,
+                CoreRules.FILTER_CALC_MERGE,
+                CoreRules.PROJECT_CALC_MERGE,
+                CoreRules.FILTER_INTO_JOIN
+        ));
+        // 用上面的反而不行，用下面的就可以了 EnumerableProject.implement(EnumerableProject.java:89)
+
         RuleSet rules = RuleSets.ofList(
                 CoreRules.FILTER_TO_CALC,
                 CoreRules.PROJECT_TO_CALC,
                 CoreRules.FILTER_CALC_MERGE,
                 CoreRules.PROJECT_CALC_MERGE,
                 CoreRules.FILTER_INTO_JOIN,
+                EnumerableRules.ENUMERABLE_VALUES_RULE,
                 EnumerableRules.ENUMERABLE_TABLE_SCAN_RULE,
                 EnumerableRules.ENUMERABLE_PROJECT_TO_CALC_RULE,
                 EnumerableRules.ENUMERABLE_FILTER_TO_CALC_RULE,
