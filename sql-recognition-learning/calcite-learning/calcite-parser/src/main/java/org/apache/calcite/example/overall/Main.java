@@ -83,20 +83,28 @@ public class Main {
 
 
         // 4. SQL Optimize: RelNode --> RelNode
+
+        // 这里面基本都是 converter 规则
         List<RelOptRule> relOptRules = new ArrayList<>(EnumerableRules.ENUMERABLE_RULES);
         relOptRules.addAll(Arrays.asList(
+                // 这两个都是 Transformation 规则
                 EnumerableRules.ENUMERABLE_PROJECT_TO_CALC_RULE,
                 EnumerableRules.ENUMERABLE_FILTER_TO_CALC_RULE,
+
+                // 这些也是 Transformation 规则
                 CoreRules.FILTER_TO_CALC,
                 CoreRules.PROJECT_TO_CALC,
                 CoreRules.FILTER_CALC_MERGE,
                 CoreRules.PROJECT_CALC_MERGE,
                 CoreRules.FILTER_INTO_JOIN
         ));
-        // 用上面的反而不行，用下面的就可以了 EnumerableProject.implement(EnumerableProject.java:89)
 
-        RuleSet rules = RuleSets.ofList(
-                CoreRules.FILTER_TO_CALC,
+        // 要把 ENUMERABLE_VALUES_RULE 去掉，否则会报错
+        // EnumerableProject 的 implement 方法中说，EnumerableCalcRel is always better
+        relOptRules.remove(EnumerableRules.ENUMERABLE_PROJECT_RULE);
+
+        // 这个是可以的
+        List<RelOptRule> relOptRules2 = Arrays.asList(CoreRules.FILTER_TO_CALC,
                 CoreRules.PROJECT_TO_CALC,
                 CoreRules.FILTER_CALC_MERGE,
                 CoreRules.PROJECT_CALC_MERGE,
@@ -109,6 +117,9 @@ public class Main {
                 EnumerableRules.ENUMERABLE_SORT_RULE,
                 EnumerableRules.ENUMERABLE_CALC_RULE,
                 EnumerableRules.ENUMERABLE_AGGREGATE_RULE);
+
+        // 开始优化
+        RuleSet rules = RuleSets.ofList(relOptRules);
         RelNode optimizerRelTree = optimizer.optimize(
                 relNode,
                 relNode.getTraitSet().plus(EnumerableConvention.INSTANCE),
